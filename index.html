@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wheel Torque Guide</title>
+    <style>
+        :root {
+            --primary: #2563eb; --dark: #0f172a; --bg: #f1f5f9; --text: #334155;
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg); margin: 0; padding: 20px; 
+        }
+
+        .container { 
+            max-width: 1000px; margin: 0 auto; background: white; 
+            padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); 
+        }
+
+        h2 { margin-top: 0; color: var(--dark); font-weight: 800; }
+
+        /* Search Input */
+        #carSearch { 
+            width: 100%; padding: 15px; margin-bottom: 20px; 
+            border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; 
+            box-sizing: border-box; outline: none; transition: border-color 0.2s;
+        }
+        #carSearch:focus { border-color: var(--primary); }
+
+        /* Table Area */
+        .table-wrapper { 
+            overflow-x: auto; max-height: 70vh; border-radius: 10px; 
+            border: 1px solid #e2e8f0; position: relative;
+        }
+
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        
+        th { 
+            position: sticky; top: 0; background: #f8fafc; color: var(--dark);
+            padding: 15px; text-align: left; font-weight: 600;
+            border-bottom: 2px solid #e2e8f0; z-index: 10;
+        }
+
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        tr:hover td { background-color: #f1f7ff; }
+
+        .brand { font-weight: 700; color: var(--dark); }
+        .model { color: #64748b; }
+        .sock { 
+            font-family: monospace; color: var(--primary); background: #dbeafe; 
+            padding: 3px 8px; border-radius: 6px; font-weight: bold; 
+        }
+
+        .chip {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .chip:active {
+            background: #2563eb;
+            color: white;
+            transform: scale(0.95);
+        }
+
+        /* 2. PASTE THE MOBILE PORTRAIT FIX HERE */
+        @media screen and (max-width: 600px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { position: absolute; top: -9999px; left: -9999px; }
+            tr { 
+                margin-bottom: 15px; border: 1px solid #e2e8f0; 
+                border-radius: 10px; background: white; padding: 5px; 
+            }
+            td { 
+                border: none; position: relative; padding-left: 50% !important; 
+                text-align: right !important; border-bottom: 1px solid #f1f5f9; 
+            }
+            td:before { 
+                position: absolute; left: 15px; width: 45%; 
+                text-align: left; font-weight: bold; color: #64748b; 
+            }
+            /* These labels show up in Portrait mode */
+            td:nth-of-type(1):before { content: "Brand"; }
+            td:nth-of-type(2):before { content: "Model"; }
+            td:nth-of-type(3):before { content: "Steel (Nm)"; }
+            td:nth-of-type(4):before { content: "Alloy (Nm)"; }
+            td:nth-of-type(5):before { content: "Socket"; }
+        }
+
+        #noResults { display: none; text-align: center; padding: 30px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Wheel Bolt Torque & Socket Guide</h2>
+
+    <div class="brand-chips" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px;">
+    <button type="button" class="chip" onclick="chipSearch('VW')">VW</button>
+    <button type="button" class="chip" onclick="chipSearch('Audi')">Audi</button>
+    <button type="button" class="chip" onclick="chipSearch('Skoda')">Skoda</button>
+    <button type="button" class="chip" onclick="chipSearch('Ford')">Ford</button>
+    <button type="button" class="chip" onclick="chipSearch('Mercedes')">Merc</button>
+    <button type="button" class="chip" onclick="chipSearch('BMW')">BMW</button>
+    <button type="button" class="chip" onclick="chipSearch('Fiat')">Fiat</button>
+    <button type="button" class="chip" onclick="chipSearch('Toyota')">Toyota</button>
+    <button type="button" class="chip" onclick="chipSearch('Isuzu')">Isuzu</button>
+    <button type="button" class="chip" onclick="chipSearch('Citroen')">Citroën</button>
+    <button type="button" class="chip" onclick="chipSearch('Peugeot')">Peugeot</button>
+    <button type="button" class="chip" onclick="chipSearch('Horsebox')">🐴 Horsebox</button>
+    <button type="button" class="chip" onclick="chipSearch('Trailer')">🛒 Trailer</button>
+</div>
+    
+    <input type="text" id="carSearch" onkeyup="filterTable()" placeholder="Search brand or model (e.g. 'Cupra' or 'A4')...">
+
+    <div class="table-wrapper">
+        <table id="torqueTable">
+            <thead>
+                <tr>
+                    <th>Brand</th>
+                    <th>Model</th>
+                    <th>Steel (Nm)</th>
+                    <th>Alloy (Nm)</th>
+                    <th>Socket</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="brand">Alfa Romeo</td><td class="model">145</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">146</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">147</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">155</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">156</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">159</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">164</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">166</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">4C</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">8C</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Brera</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Giulia</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Giulietta</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">GT</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">GTV</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Mito</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Spider</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Stelvio</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Alfa Romeo</td><td class="model">Tonale</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Aston Martin</td><td class="model">Cygnet</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">DB11</td><td>-</td><td>175</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">DB7</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">DB9</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">DBS</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">DBX</td><td>-</td><td>175</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">Rapide</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">Vanquish</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Aston Martin</td><td class="model">Vantage</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Audi</td><td class="model">80</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">100</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A1</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A2</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A3</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A4</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A5</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A6</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A7</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">A8</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">E-Tron</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q2</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q3</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q4 E-Tron</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q5</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q7</td><td>160</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">Q8</td><td>160</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">R8</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">RS3</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">RS4</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">RS5</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">RS6</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Audi</td><td class="model">TT</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Bentley</td><td class="model">Arnage</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Bentley</td><td class="model">Azure</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Bentley</td><td class="model">Bentayga</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Bentley</td><td class="model">Continental GT</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Bentley</td><td class="model">Flying Spur</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Bentley</td><td class="model">Mulsanne</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">BMW</td><td class="model">1 Series</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">2 Series</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">3 Series</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">4 Series</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">5 Series</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">6 Series</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">7 Series</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">8 Series</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">I3</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">I4</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">I8</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">IX</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">IX3</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">M2</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">M3</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">M4</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">M5</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X1</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X2</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X3</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X4</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X5</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X6</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">X7</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">Z3</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">BMW</td><td class="model">Z4</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Chrysler</td><td class="model">300C</td><td>135</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Crossfire</td><td>-</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Delta</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Grand Voyager</td><td>135</td><td>135</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Neon</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">PT Cruiser</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Sebring</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Voyager</td><td>135</td><td>135</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Chrysler</td><td class="model">Ypsilon</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Citroen</td><td class="model">2CV</td><td>60</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Berlingo</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C Crosser</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C Zero</td><td>-</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C1</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C15D</td><td>100</td><td>-</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C2</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C3</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C3 Aircross</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C3 Picasso</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4 Aircross</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4 Cactus</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4 Grand Picasso</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4 Picasso</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C4 Spacetourer</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C5</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C5 Aircross</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C6</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">C8</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS3</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS3 Crossback</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS4</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS4 Crossback</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS5</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS7</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">DS9</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Dispatch</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Jumper</td><td>160</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Jumpy</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Nemo</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Relay</td><td>160</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Relay III Motorhome</td><td>160</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Saxo</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">SpaceTourer</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Xsara</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Citroen</td><td class="model">Xsara Picasso</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Cupra</td><td class="model">Born</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Cupra</td><td class="model">Formentor</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Cupra</td><td class="model">Leon (Modern)</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Cupra</td><td class="model">Ateca</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Cupra</td><td class="model">Tavascan</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            
+            <tr><td class="brand">Dacia</td><td class="model">Bigster</td><td>-</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Dokker</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Duster</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Duster II</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Lodgy</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Logan</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Logan MCV</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Logan Van</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Dacia</td><td class="model">Sandero</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Daewoo</td><td class="model">Aveo</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Bolt</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Captiva</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Cruze</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Epica</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Evanda</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Kalos</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Lacetti</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Lanos</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Leganza</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Matiz</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Nubira</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Orlando</td><td>120</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Rexton</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Rezzo</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Spark</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Tacuma</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Trax</td><td>125</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Daewoo</td><td class="model">Volt</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Daihatsu</td><td class="model">Charade</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Copen</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Cuore</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Grand Move</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Materia</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Sirion</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">Terios</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Daihatsu</td><td class="model">YRV</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Dodge</td><td class="model">Caliber</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Dodge</td><td class="model">Journey</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Dodge</td><td class="model">Nitro</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Fiat</td><td class="model">124 Spider</td><td>-</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">124 Spider Abarth</td><td>-</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">500</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">500 / 595 Abarth</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">500 E</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">500L</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">500X</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">600</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Albea</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Avventura</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Barchetta</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Bravo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Cinquecento</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Coupe</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Croma</td><td>110</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Doblo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ducato</td><td>160</td><td>160</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ducato Maxi</td><td>180</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ducato Motorhome</td><td>160</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Egea</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Fiorino</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Freemont</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Fullback</td><td>120</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Idea</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Linea</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Marea</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Mobi</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Multipla</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ottimo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Palio</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Panda</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Panda Van</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Punto</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Qubo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ritmo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Scudo</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Sedici</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Seicento</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Siena</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Stilo</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Talento</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Tipo</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Ulysse</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Viaggio</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Fiat</td><td class="model">Weekend</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Ford</td><td class="model">B-Max</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">C-Max</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">C-Max (Late)</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">EcoSport</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Edge</td><td>-</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Explorer</td><td>-</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Fiesta</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Fiesta ST</td><td>-</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Focus</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Focus (Late)</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Focus RS</td><td>-</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Focus ST</td><td>-</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Fusion</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Galaxy</td><td>170</td><td>170</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Galaxy (Late)</td><td>200</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Ka</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Ka (Fiat Base)</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Ka+</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Kuga</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Kuga (Late)</td><td>200</td><td>200</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Mondeo</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Mondeo (Late)</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Mondeo (Latest)</td><td>200</td><td>200</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Mustang</td><td>-</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Mustang Mach-E</td><td>-</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Puma</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Puma (New)</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Ranger</td><td>135</td><td>135</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Ranger (New)</td><td>-</td><td>210</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">S-Max</td><td>170</td><td>170</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">S-Max (Late)</td><td>200</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Tourneo Connect</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Tourneo Custom</td><td>200</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Transit</td><td>200</td><td>200</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Transit Connect</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Transit Courier</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Ford</td><td class="model">Transit Custom</td><td>200</td><td>200</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Genesis</td><td class="model">G70</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Genesis</td><td class="model">G80</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Genesis</td><td class="model">GV60</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Genesis</td><td class="model">GV70</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Genesis</td><td class="model">GV80</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Honda</td><td class="model">Accord</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">CR-V</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">Civic</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">Civic Type R</td><td>-</td><td>127</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">FR-V</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">HR-V</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">Insight</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">Jazz</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">Legend</td><td>108</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">NSX</td><td>-</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">S2000</td><td>-</td><td>108</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Honda</td><td class="model">e</td><td>-</td><td>108</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Hyundai</td><td class="model">Accent</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Bayon</td><td>107</td><td>107</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Coupe</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Elantra</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Genesis</td><td>-</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Getz</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">H1 / iLoad</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">H100</td><td>110</td><td>110</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Matrix</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Santa Fe</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Santa Fe (Late)</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Sonata</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Terracan</td><td>110</td><td>110</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Trajet</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Tucson</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Tucson (Late)</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Veloster</td><td>-</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">i10</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">i20</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">i30</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">i40</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">i800</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">iX20</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">iX35</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Ioniq</td><td>107</td><td>107</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Ioniq 5</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Hyundai</td><td class="model">Kona</td><td>107</td><td>107</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Infiniti</td><td class="model">EX</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">FX</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">G</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">M</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">Q30</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">Q50</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">Q60</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">Q70</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">QX30</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">QX50</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Infiniti</td><td class="model">QX70</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Isuzu</td><td class="model">D-Max</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Isuzu</td><td class="model">D-Max (Late)</td><td>-</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Isuzu</td><td class="model">Grafter</td><td>150</td><td>-</td><td class="sock">41mm</td></tr>
+            <tr><td class="brand">Isuzu</td><td class="model">Rodeo</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Isuzu</td><td class="model">Trooper</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Iveco</td><td class="model">Daily (Light)</td><td>160</td><td>-</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Iveco</td><td class="model">Daily (Heavy)</td><td>290</td><td>-</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Iveco</td><td class="model">Daily Motorhome</td><td>160</td><td>200</td><td class="sock">21mm</td></tr>
+
+           <tr><td class="brand">Jaguar</td><td class="model">E-Pace</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">F-Pace</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">F-Type</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">I-Pace</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">S-Type</td><td>125</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">X-Type</td><td>125</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">XE</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">XF</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">XJ (X350)</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">XJ (X351)</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jaguar</td><td class="model">XK8 / XKR</td><td>-</td><td>125</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Jeep</td><td class="model">Cherokee</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Cherokee (Late)</td><td>-</td><td>135</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Commander</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Compass</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Compass (New)</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Grand Cherokee</td><td>130</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Grand Cherokee (Late)</td><td>-</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Patriot</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Renegade</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Wrangler</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Jeep</td><td class="model">Wrangler (Latest)</td><td>-</td><td>175</td><td class="sock">22mm</td></tr>
+
+            <tr><td class="brand">Kia</td><td class="model">Carens</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Carnival</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Ceed</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">EV6</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Niro</td><td>107</td><td>107</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Optima</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Picanto</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Rio</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Sedona</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Sorento</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Sorento (Late)</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Soul</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Sportage</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Sportage (Late)</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Stinger</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Stonic</td><td>107</td><td>107</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Kia</td><td class="model">Venga</td><td>100</td><td>100</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Lada</td><td class="model">Granta</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lada</td><td class="model">Kalina</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lada</td><td class="model">Niva</td><td>85</td><td>85</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lada</td><td class="model">Priora</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lada</td><td class="model">Vesta</td><td>105</td><td>105</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lada</td><td class="model">XRAY</td><td>105</td><td>105</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Lamborghini</td><td class="model">Aventador</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lamborghini</td><td class="model">Gallardo</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lamborghini</td><td class="model">Huracan</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lamborghini</td><td class="model">Urus</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Lancia</td><td class="model">Delta</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Flavia</td><td>-</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Musa</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Phedra</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Thema (New)</td><td>-</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Voyager</td><td>135</td><td>135</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Ypsilon (Early)</td><td>86</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lancia</td><td class="model">Ypsilon (Late)</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Land Rover</td><td class="model">Defender (Early)</td><td>100</td><td>100</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Defender (Heavy Duty Wheels)</td><td>170</td><td>170</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Defender (New)</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery 1</td><td>130</td><td>130</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery 2</td><td>140</td><td>140</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery 3</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery 4</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery 5</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Discovery Sport</td><td>-</td><td>133</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Freelander 1</td><td>115</td><td>115</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Freelander 2</td><td>133</td><td>133</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover (Classic)</td><td>130</td><td>130</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover (P38)</td><td>100</td><td>100</td><td class="sock">27mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover (L322)</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover (L405)</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover (L460)</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover Evoque</td><td>-</td><td>133</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover Sport</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Land Rover</td><td class="model">Range Rover Velar</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+
+            <tr><td class="brand">Lexus</td><td class="model">CT</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">ES</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">GS</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">GX</td><td>-</td><td>112</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">IS</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">LC</td><td>-</td><td>140</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">LS</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">LS (Late)</td><td>-</td><td>140</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">NX</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">RC</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">RX</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">SC</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Lexus</td><td class="model">UX</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Lotus</td><td class="model">Elise</td><td>-</td><td>105</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lotus</td><td class="model">Emira</td><td>-</td><td>105</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lotus</td><td class="model">Evora</td><td>-</td><td>105</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Lotus</td><td class="model">Exige</td><td>-</td><td>105</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Mahindra</td><td class="model">KUV100</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mahindra</td><td class="model">Quanto</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mahindra</td><td class="model">XUV500</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Maserati</td><td class="model">Ghibli</td><td>-</td><td>100</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Maserati</td><td class="model">GranCabrio</td><td>-</td><td>100</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Maserati</td><td class="model">GranTurismo</td><td>-</td><td>100</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Maserati</td><td class="model">Levante</td><td>-</td><td>100</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Maserati</td><td class="model">Quattroporte</td><td>-</td><td>100</td><td class="sock">22mm</td></tr>
+
+            <tr><td class="brand">Maybach</td><td class="model">57</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Maybach</td><td class="model">62</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Mazda</td><td class="model">2</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">3</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">3 (Late)</td><td>128</td><td>128</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">5</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">6</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">6 (Late)</td><td>128</td><td>128</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">BT-50</td><td>120</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-3</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-30</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-5</td><td>128</td><td>128</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-60</td><td>-</td><td>140</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-7</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">CX-9</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">MX-30</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">MX-5</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">MX-5 (ND)</td><td>-</td><td>120</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mazda</td><td class="model">RX-8</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">A-Class (W168)</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">A-Class (W169)</td><td>130</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">A-Class (W176/W177)</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">B-Class</td><td>130</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">C-Class (W203)</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">C-Class (W204)</td><td>130</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">C-Class (W205/W206)</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">Citan</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">CL / CLA / CLS</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">E-Class (W211)</td><td>130</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">E-Class (W212/W213)</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">EQA / EQB / EQC</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">EQE / EQS</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">G-Wagon</td><td>180</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">GL / GLA / GLB</td><td>-</td><td>130</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">GLC / GLE / GLS</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">M-Class / ML</td><td>150</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">R-Class</td><td>-</td><td>150</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">S-Class (W220)</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">S-Class (W221/W222)</td><td>-</td><td>150</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">SL / SLK / SLC</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">Sprinter (Single)</td><td>240</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">Sprinter (Twin)</td><td>180</td><td>-</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">V-Class / Vito</td><td>180</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Mercedes-Benz</td><td class="model">X-Class</td><td>-</td><td>180</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">MG</td><td class="model">3</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">4 EV</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">5 EV</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">6</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">GS</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">HS</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">ZS</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">MG</td><td class="model">ZS EV</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">MINI</td><td class="model">Clubman (R55)</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Clubman (F54)</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Cooper (R50/R53)</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Cooper (R56/F56)</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Countryman (R60)</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Countryman (F60)</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">One</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">MINI</td><td class="model">Paceman</td><td>140</td><td>140</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Mitsubishi</td><td class="model">ASX</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Colt / CZC</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Eclipse Cross</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">L200</td><td>128</td><td>128</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">L200 (Late)</td><td>-</td><td>147</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Lancer</td><td>98</td><td>98</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Mirage</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Outlander</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Mitsubishi</td><td class="model">Pajero / Shogun</td><td>118</td><td>118</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Nissan</td><td class="model">350Z / 370Z</td><td>-</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Ariya</td><td>-</td><td>113</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Cube</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">GT-R</td><td>-</td><td>132</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Interstar</td><td>160</td><td>160</td><td class="sock">24mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Juke</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Leaf</td><td>112</td><td>112</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Micra</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Murano</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Navara</td><td>113</td><td>113</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Navara (Late)</td><td>-</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Note</td><td>105</td><td>105</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">NV200 / e-NV200</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">NV300 / NV400</td><td>160</td><td>160</td><td class="sock">24mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Pathfinder</td><td>113</td><td>113</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Patrol</td><td>133</td><td>133</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Pixo</td><td>85</td><td>85</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Primastar</td><td>142</td><td>142</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Primera</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Qashqai</td><td>113</td><td>113</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">Townstar</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Nissan</td><td class="model">X-Trail</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Opel</td><td class="model">Adam</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Agila</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Ampera</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Antara</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Astra</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Astra (Late)</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Cascada</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Combo</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Corsa</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Crossland / Crossland X</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Grandland / Grandland X</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Insignia</td><td>150</td><td>150</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Karl</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Meriva</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Mokka / Mokka X</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Movano</td><td>160</td><td>160</td><td class="sock">24mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Vectra</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Vivaro</td><td>142</td><td>142</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Zafira</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Opel</td><td class="model">Zafira (Late)</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Peugeot</td><td class="model">107 / 108</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">206 / 207 / 208</td><td>90</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">2008</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">307 / 308</td><td>90</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">3008</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">407</td><td>90</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">4007 / 4008</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">508</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">5008</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">607</td><td>90</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">807</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Bipper</td><td>90</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Boxer (Light)</td><td>160</td><td>160</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Boxer (Heavy)</td><td>180</td><td>180</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Expert</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Partner</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">RCZ</td><td>-</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Rifter</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Peugeot</td><td class="model">Traveller</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Polestar</td><td class="model">1</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Polestar</td><td class="model">2</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Porsche</td><td class="model">911 (996/997)</td><td>-</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">911 (991/992)</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Boxster (986/987)</td><td>-</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Boxster (981/718)</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Cayenne (9PA)</td><td>160</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Cayenne (92A/9YA)</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Cayman</td><td>-</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Macan</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Panamera</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Porsche</td><td class="model">Taycan</td><td>-</td><td>160</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Renault</td><td class="model">Alaskan</td><td>-</td><td>150</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Arkana</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Austral</td><td>-</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Captur</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Clio</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Espace</td><td>105</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Fluence</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Kadjar</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Kangoo</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Koleos</td><td>105</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Laguna</td><td>105</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Master</td><td>160</td><td>160</td><td class="sock">24mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Megane</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Modus</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Scenic</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Talisman</td><td>-</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Trafic</td><td>142</td><td>142</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Twingo</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Twizy</td><td>-</td><td>105</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Renault</td><td class="model">Zoe</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Rolls-Royce</td><td class="model">Cullinan</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Rolls-Royce</td><td class="model">Dawn</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Rolls-Royce</td><td class="model">Ghost</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Rolls-Royce</td><td class="model">Phantom</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Rolls-Royce</td><td class="model">Wraith</td><td>-</td><td>140</td><td class="sock">22mm</td></tr>
+
+            <tr><td class="brand">Rover</td><td class="model">25 / 45 / 75</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Rover</td><td class="model">Streetwise</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Saab</td><td class="model">9-3</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Saab</td><td class="model">9-5</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Saab</td><td class="model">9-5 (Late)</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Saab</td><td class="model">9-7X</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">SEAT</td><td class="model">Alhambra</td><td>170</td><td>170</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Altea</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Arona</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Ateca</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Cordoba</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Exeo</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Ibiza</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Leon</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Mii</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Taco</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">SEAT</td><td class="model">Toledo</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Skoda</td><td class="model">Citigo</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Enyaq</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Fabia</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Kamiq</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Karoq</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Kodiaq</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Octavia</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Rapid</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Roomster</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Superb</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Skoda</td><td class="model">Yeti</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Smart</td><td class="model">Forfour (Early)</td><td>108</td><td>108</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Smart</td><td class="model">Forfour (Late)</td><td>105</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Smart</td><td class="model">Fortwo</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Smart</td><td class="model">Roadster</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">SsangYong</td><td class="model">Actyon</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SsangYong</td><td class="model">Korando</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SsangYong</td><td class="model">Musso</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SsangYong</td><td class="model">Rexton</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SsangYong</td><td class="model">Rodius</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">SsangYong</td><td class="model">Tivoli</td><td>120</td><td>120</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Subaru</td><td class="model">BRZ</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Forester</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Impreza</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Justy</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Legacy</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Levorg</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Outback</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">Solterra</td><td>-</td><td>140</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Subaru</td><td class="model">XV</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Suzuki</td><td class="model">Across</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Alto</td><td>85</td><td>85</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Baleno</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Celerio</td><td>85</td><td>85</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Grand Vitara</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Ignis</td><td>85</td><td>85</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Jimny</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Kizashi</td><td>-</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Liana</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">S-Cross</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Splash</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Swace</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Swift</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">SX4</td><td>100</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Vitara</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Suzuki</td><td class="model">Wagon R+</td><td>85</td><td>85</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Tesla</td><td class="model">Model 3</td><td>-</td><td>175</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Tesla</td><td class="model">Model S</td><td>-</td><td>175</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Tesla</td><td class="model">Model X</td><td>-</td><td>175</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Tesla</td><td class="model">Model Y</td><td>-</td><td>175</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Toyota</td><td class="model">Auris</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Avensis</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Aygo</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Aygo X</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">bZ4X</td><td>-</td><td>140</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">C-HR</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Camry</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Corolla</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">GT86</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">GR86</td><td>-</td><td>120</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">GR Supra</td><td>-</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">GR Yaris</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Highlander</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Hilux</td><td>105</td><td>105</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Hilux (Late)</td><td>-</td><td>121</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">IQ</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Land Cruiser</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Land Cruiser (Heavy)</td><td>209</td><td>209</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Mirai</td><td>-</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Prius</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Proace</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Proace City</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">RAV4</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Urban Cruiser</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Verso</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Yaris</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Toyota</td><td class="model">Yaris Cross</td><td>103</td><td>103</td><td class="sock">21mm</td></tr>
+
+            <tr><td class="brand">Vauxhall</td><td class="model">Adam</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Agila</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Ampera</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Antara</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Astra</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Astra (Late)</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Cascada</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Combo</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Corsa</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Crossland / Crossland X</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Grandland / Grandland X</td><td>100</td><td>100</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Insignia</td><td>150</td><td>150</td><td class="sock">22mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Karl</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Meriva</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Mokka / Mokka X</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Movano</td><td>160</td><td>160</td><td class="sock">24mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Vectra</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Vivaro</td><td>142</td><td>142</td><td class="sock">21mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Zafira</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Vauxhall</td><td class="model">Zafira (Late)</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Volkswagen</td><td class="model">Amarok</td><td>180</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Arteon</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Beetle</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Caddy</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Crafter</td><td>240</td><td>240</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Eos</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Fox</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Golf</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">ID.3 / ID.4 / ID.5</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">ID. Buzz</td><td>-</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Jetta</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Lupo</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Multivan</td><td>180</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Passat</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Phaeton</td><td>-</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Polo</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Scirocco</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Sharan</td><td>170</td><td>170</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">T-Cross / T-Roc</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Taigo</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Tiguan</td><td>120</td><td>140</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Touareg</td><td>160</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Touran</td><td>120</td><td>120</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Transporter T4</td><td>160</td><td>160</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Transporter T5 / T6</td><td>180</td><td>180</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volkswagen</td><td class="model">Up!</td><td>110</td><td>110</td><td class="sock">17mm</td></tr>
+
+            <tr><td class="brand">Volvo</td><td class="model">C30</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">C40</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">C70</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">S40 / V40 (Early)</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">S40 / V50 (Late)</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">S60 / V60</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">S80 / V70</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">S90 / V90</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">V40 (Modern)</td><td>110</td><td>110</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">XC40</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">XC60</td><td>-</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">XC70</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Volvo</td><td class="model">XC90</td><td>140</td><td>140</td><td class="sock">19mm</td></tr>
+
+            
+            <tr><td class="brand">Trailers</td><td class="model">AL-KO (Bolt M10)</td><td>54</td><td>-</td><td class="sock">17mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">AL-KO (Bolt M12)</td><td>88</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">AL-KO (Bolt M14)</td><td>146</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">Indespension (Bolt M12)</td><td>74</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">Indespension (Bolt M14)</td><td>81</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">Ifor Williams (Bolt M12)</td><td>88</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">Avonride (Bolt M12)</td><td>88</td><td>-</td><td class="sock">19mm</td></tr>
+
+            <tr><td class="brand">Trailers</td><td class="model">Peak (Nut M12 x 1.5)</td><td>102</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Trailers</td><td class="model">Peak (Nut M16 x 1.5)</td><td>197</td><td>-</td><td class="sock">24mm</td></tr>
+
+            <tr><td class="brand">Horse Box</td><td class="model">Ifor Williams HB401 / HB403 / HB505 / HB506</td><td>88</td><td>90</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Ifor Williams HB510 / HB511 / HB610</td><td>88</td><td>90</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Equi-Trek Day Treka / Show Treka (M12)</td><td>90</td><td>95</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Equi-Trek Star Treka (M14)</td><td>120</td><td>130</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Rice Trailers Classic Models (Nut)</td><td>80</td><td>-</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Bateson Deauville / Derby / Ascot</td><td>90</td><td>95</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Fautras Provan / Oblic</td><td>95</td><td>100</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Cheval Liberté Gold / Touring / Optimax</td><td>90</td><td>95</td><td class="sock">19mm</td></tr>
+            <tr><td class="brand">Horse Box</td><td class="model">Nugent Spirit Horsebox</td><td>95</td><td>100</td><td class="sock">19mm</td></tr>
+            
+                
+                </tbody>
+        </table>
+        <div id="noResults">No matching car found.</div>
+    </div>
+</div>
+
+<script>
+// Function for the Quick Tap buttons
+function chipSearch(brandName) {
+    const input = document.getElementById("carSearch");
+    input.value = brandName;
+    filterTable(); // Run the search
+}
+
+// Updated search logic with "Spelling Protector"
+function filterTable() {
+    const input = document.getElementById("carSearch");
+    let filter = input.value.toLowerCase().trim();
+    
+    // Alias & Spelling Protector
+    const aliases = {
+        "vw": "volkswagen",
+        "merc": "mercedes",
+        "beemer": "bmw",
+        "citreon": "citroen",   // Common typo
+        "pegueot": "peugeot",   // Common typo
+        "pegeot": "peugeot",    // Common typo
+        "izuzu": "isuzu",       // Common typo
+        "horse": "horsebox",
+        "pony": "horsebox"
+    };
+
+    if (aliases[filter]) {
+        filter = aliases[filter];
+    }
+
+    const tr = document.getElementById("torqueTable").getElementsByTagName("tr");
+    let matchFound = false;
+
+    for (let i = 1; i < tr.length; i++) {
+        const brand = tr[i].querySelector(".brand").innerText.toLowerCase();
+        const model = tr[i].querySelector(".model").innerText.toLowerCase();
+        
+        if (brand.includes(filter) || model.includes(filter)) {
+            tr[i].style.display = "";
+            matchFound = true;
+        } else {
+            tr[i].style.display = "none";
+        }
+    }
+    document.getElementById("noResults").style.display = matchFound ? "none" : "block";
+}
+// Ensure it works when user taps 'Clear' on mobile
+function clearInput() {
+    const input = document.getElementById("carSearch");
+    input.value = "";
+    filterTable();
+    input.focus();
+}
+</script>
+</body>
+</html>
